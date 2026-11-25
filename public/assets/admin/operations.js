@@ -204,7 +204,6 @@
     }
 
     hub.addEventListener('change', () => load().catch(showError));
-    el('scBtnRefresh').addEventListener('click', () => load().catch(showError));
 
     for (const [id, automatic] of [
       ['scBtnSave', false],
