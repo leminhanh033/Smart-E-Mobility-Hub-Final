@@ -1522,3 +1522,4 @@ if (stopChargingBtns.length > 0) {
     });
   });
 }
+

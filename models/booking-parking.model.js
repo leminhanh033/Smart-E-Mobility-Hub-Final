@@ -8,6 +8,7 @@ const parkingBookingSchema = new Schema({
   startTime: { type: Date },
   bookedAt: { type: Date, default: Date.now },
   endTime: { type: Date }, 
+  cost: { type: Number, default: 0 },
   status: { type: String, default: 'active' }, // active (đang giữ), completed, cancelled
 }, { timestamps: true });
 

@@ -80,10 +80,10 @@ if (register) {
       },
     ])
     .onSuccess((event) => {
-      const fullname=event.target.fullname.value;
-      const phone=event.target.phone.value;
-      const email=event.target.email.value;
-      const password=event.target.password.value;
+      const fullname = event.target.fullname.value;
+      const phone = event.target.phone.value;
+      const email = event.target.email.value;
+      const password = event.target.password.value;
 
       fetch("/register", {
         method: "POST",
@@ -91,10 +91,10 @@ if (register) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          fullname:fullname,
-          phone:phone,
-          email:email,
-          password:password,
+          fullname: fullname,
+          phone: phone,
+          email: email,
+          password: password,
         })
       })
         .then(res => res.json())
@@ -138,8 +138,8 @@ if (login) {
       },
     ])
     .onSuccess((event) => {
-      const email=event.target.email.value;
-      const password=event.target.password.value;
+      const email = event.target.email.value;
+      const password = event.target.password.value;
 
       fetch("/login", {
         method: "POST",
@@ -147,8 +147,8 @@ if (login) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email:email,
-          password:password,
+          email: email,
+          password: password,
         })
       })
         .then(res => res.json())
@@ -165,15 +165,15 @@ if (login) {
 }
 
 //Gửi otp
-const sendOTP=document.querySelector(".btn-send-otp");
-if(sendOTP){
-  sendOTP.addEventListener("click",()=>{
-    const phoneEmail=document.querySelector("#phoneEmail").value;
-    if(!phoneEmail){
+const sendOTP = document.querySelector(".btn-send-otp");
+if (sendOTP) {
+  sendOTP.addEventListener("click", () => {
+    const phoneEmail = document.querySelector("#phoneEmail").value;
+    if (!phoneEmail) {
       notyf.error("Vui lòng nhập email hoặc số điện thoại");
     }
-    else{
-      fetch("/send-otp",{
+    else {
+      fetch("/send-otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -182,15 +182,15 @@ if(sendOTP){
           phoneEmail: phoneEmail,
         })
       })
-      .then(res=>res.json())
-      .then(data=>{
-        if(data.code=="success"){
-          notyf.success(data.message);
-        }
-        if(data.code=="error"){
-          notyf.error(data.message);
-        }
-      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.code == "success") {
+            notyf.success(data.message);
+          }
+          if (data.code == "error") {
+            notyf.error(data.message);
+          }
+        })
     }
   })
 }
@@ -198,7 +198,7 @@ if(sendOTP){
 const resetPassword = document.querySelector("#change-password");
 if (resetPassword) {
   const validate = new JustValidate('#change-password');
-  
+
   validate
     .addField('#phoneEmail', [
       {
@@ -269,4 +269,22 @@ if (resetPassword) {
           console.error("Lỗi kết nối:", err);
         });
     });
+}
+
+const password = document.querySelector("#login-form #password");
+const togglePassword = document.querySelector("#login-form #togglePassword");
+if (togglePassword) {
+  togglePassword.addEventListener("click", function () {
+    if (password.type === "password") {
+      password.type = "text";
+
+      togglePassword.classList.remove("fa-eye");
+      togglePassword.classList.add("fa-eye-slash");
+    } else {
+      password.type = "password";
+
+      togglePassword.classList.remove("fa-eye-slash");
+      togglePassword.classList.add("fa-eye");
+    }
+  });
 }

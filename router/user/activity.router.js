@@ -7,8 +7,8 @@ const vehiclemodel = require("../../models/vehicle.model");
 const vehicleOwnermodel = require("../../models/vehicleOwner.model");
 const moment = require("moment")
 const chargingPortModel = require("../../models/chargingPort.model");
-const chargingDemandModel=require("../../models/charging-demand.model");
-const Demand = require('../../models/charging-demand.model'); 
+const chargingDemandModel = require("../../models/charging-demand.model");
+const Demand = require('../../models/charging-demand.model');
 
 const RATE_PER_MINUTE = 500;
 const PARKING_HOLD_MS = 60 * 60 * 1000; // 60 phút
@@ -474,8 +474,17 @@ router.post("/park/checkout", async (req, res) => {
     if (booking.endTime) {
       return res.json({ code: "error", message: "Xe đã được lấy ra trước đó." });
     }
+    const endTime = new Date();
+    const PARKING_RATE_PER_HOUR = 1000;
 
-    booking.endTime = new Date();
+    const hours = Math.max(
+      0,
+      (endTime - new Date(booking.startTime)) / 3600000
+    );
+
+    const cost = hours * PARKING_RATE_PER_HOUR;
+    booking.cost = Math.round(cost);
+    booking.endTime = endTime;
     booking.status = "completed";
     await booking.save();
 
