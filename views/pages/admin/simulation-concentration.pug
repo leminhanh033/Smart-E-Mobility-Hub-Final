@@ -1,0 +1,118 @@
+extends ../../layouts/admin/default.pug
+
+block titleName
+  h1.dashboard-header__title Phân hệ Mô phỏng Kịch bản (What-If Simulation Suite)
+
+block main 
+  .simulation-page.container
+    
+    include ../../mixins/admin/simulation-tabs.pug
+    +simulationTabs('concentration')
+
+    .simulation-layout
+      
+      // ================= CỘT TRÁI =================
+      .simulation-left
+        .card.settings-card
+          .card-header
+            h2.card-title
+              i.fa-solid.fa-sliders.text-green
+              | THIẾT LẬP KỊCH BẢN
+
+          .card-body
+            .form-group
+              label.form-label HUB TẬP TRUNG PHƯƠNG TIỆN
+              select#concHubId.form-control
+                //- JS sẽ tự động đổ 4 Hub vào đây
+            
+            .form-group
+              label.form-label XE HIỆN TẠI TẠI HUB
+              input#concCurrentVehicles.form-control(type="number", value="14", min="0")
+              small.form-text.text-muted (Số xe đang có sẵn tại trạm)
+            
+            .form-group
+              label.form-label XE GIẢ ĐỊNH DỒN VỀ TRẠM
+              input#concSimulatedVehicles.form-control(type="number", value="18", min="0")
+              small.form-text.text-muted (Số xe khách từ nơi khác đổ về trạm)
+            
+            .form-group
+              label.form-label NHU CẦU XUẤT PHÁT DỰ KIẾN
+              input#concDepartureDemand.form-control(type="number", value="16", min="0")
+              small.form-text.text-muted (Số xe khách sẽ thuê và rời khỏi trạm)
+
+          .card-footer
+            button#btnRunConcentrationSim.btn-run(type="button")
+              i.fa-solid.fa-play
+              | Chạy mô phỏng kịch bản
+
+      // ================= CỘT PHẢI =================
+      .simulation-right
+        
+        #concEmptyState.empty-state
+          .empty-icon-box
+            i.fa-regular.fa-gem
+          h3.empty-state__title Chưa có kết quả mô phỏng
+          p.empty-state__desc Vui lòng điền thông số xe ở cột bên trái và bấm "Chạy mô phỏng" để xem đánh giá tác động.
+
+        #concResultWrapper.simulation-result-wrapper(style="display: none;")
+          
+          .simulation-section
+            h3.section-label SO SÁNH TRẠNG THÁI
+            .status-compare-grid
+              .status-box.status-box--current
+                .status-box__title TRẠNG THÁI HIỆN TẠI
+                .status-box__list
+                  .status-row
+                    span Xe có sẵn tại Hub:
+                    strong#resConcCurrent --
+                  .status-row
+                    span Nhu cầu xuất phát:
+                    strong#resConcDeparture --
+                  .status-row
+                    span Trạng thái mạng lưới:
+                    strong.text-green Cân bằng ổn định
+                    
+              .status-box.status-box--simulated(style="background: #fffcf0; border-color: #ffeeba;")
+                .status-box__title TRẠNG THÁI MÔ PHỎNG
+                .status-box__list
+                  .status-row
+                    span Tổng xe dồn về trạm:
+                    strong#resConcTotal --
+                  .status-row
+                    span Mức xe tồn đọng dư thừa:
+                    strong.text-red#resConcSurplus --
+                  .status-row
+                    span Cảnh báo:
+                    strong.text-red#resConcWarning --
+
+          .simulation-section
+            h3.section-label KẾT QUẢ ĐÁNH GIÁ
+            .evaluation-grid
+              .eval-card.eval-card--orange
+                span.eval-card__label Hub dư xe tồn đọng
+                .eval-card__value.eval-card--small#resConcOverflowHub --
+                span.eval-card__sub Tỷ lệ sử dụng thấp
+                
+              .eval-card.eval-card--red
+                span.eval-card__label Hub có thể tiếp nhận xe
+                .eval-card__value.eval-card--small#resConcDeficitHub --
+                span.eval-card__sub Dựa trên chỗ đỗ còn trống
+                
+              .eval-card.eval-card--red#cardConcUnserved
+                span.eval-card__label Mức độ mất cân bằng
+                .eval-card__value.eval-card--small#resConcLevel --
+                span.eval-card__sub Lãng phí tài nguyên xe
+
+          .recommendation-card
+            .recommendation-header
+              .recommendation-header__title-group
+                i.fa-regular.fa-lightbulb.text-green
+                h3 KHUYẾN NGHỊ VẬN HÀNH
+              span#resConcStatusBadge.recommendation-header__badge --
+              
+            .recommendation-body
+              .recommendation-content
+                h4#resConcRecTitle --
+                p#resConcRecContent --
+                
+                ul#concSmartActions(style="margin-top: 16px; padding-left: 20px; font-size: 14px; color: #374151; line-height: 1.8;")

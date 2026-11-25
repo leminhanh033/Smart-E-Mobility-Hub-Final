@@ -1,0 +1,117 @@
+extends ../../layouts/admin/default.pug
+
+block titleName
+  h1.dashboard-header__title Điều phối & Tái cân bằng Phương tiện
+
+block main 
+  .dispatch-wrapper.container
+
+    .dispatch-layout
+      // =========================================
+      // CỘT TRÁI: FORM TẠO LỆNH ĐIỀU PHỐI
+      // =========================================
+      .dispatch-left
+        .card.form-card
+          .card-header
+            h2.card-title
+              i.fa-solid.fa-circle-plus.text-green
+              | Tạo lệnh điều phối mới
+
+          .card-body
+            //- 1. Hub Nguồn
+            .form-group
+              label.form-label
+                | HUB NGUỒN 
+                span.text-red *
+              .select-wrapper
+                select#dispatchFromHub.form-control
+                  //- JS sẽ đổ dữ liệu vào
+              p.form-hint.green#hintFromHub Đang tải...
+
+            //- 2. Hub Đích
+            .form-group
+              label.form-label
+                | HUB ĐÍCH 
+                span.text-red *
+              .select-wrapper
+                select#dispatchToHub.form-control
+                  //- JS sẽ đổ dữ liệu vào
+              p.form-hint#hintToHub Đang tải...
+
+            //- 3. Chọn phương tiện
+            .form-group.vehicle-selection
+              .selection-header
+                label.form-label
+                  | CHỌN PHƯƠNG TIỆN CỤ THỂ 
+                  span.text-red *
+                span.selection-count#selectionCount 0 / 0 đã chọn
+
+              .vehicle-list#vehicleList
+                p.text-muted(style="padding: 12px; text-align: center;") Đang tải danh sách xe...
+
+            //- 4. Mức độ ưu tiên
+            .form-group
+              label.form-label MỨC ĐỘ ƯU TIÊN
+              .radio-group
+                label.radio-label
+                  input(type="radio", name="priority", value="normal", checked)
+                  | Bình thường
+                label.radio-label
+                  input(type="radio", name="priority", value="urgent")
+                  | Khẩn cấp
+                  i.fa-solid.fa-fire.text-red
+
+          .card-footer
+            button#btnDispatch.btn-submit(type="button", disabled)
+              i.fa-solid.fa-paper-plane
+              | Phát Lệnh Điều Phối Ngay
+
+      // =========================================
+      // CỘT PHẢI: CẢNH BÁO & BẢNG DỮ LIỆU
+      // =========================================
+      .dispatch-right
+        
+        // ---- KHỐI CẢNH BÁO ----
+        .alert-box
+          .alert-box__header
+            .alert-box__title
+              i.fa-solid.fa-triangle-exclamation
+              | Phát hiện mất cân bằng mạng lưới
+            span.badge-auto NOC Auto-Detect
+          
+          .alert-box__content
+            .alert-node
+              .node-icon
+                i.fa-solid.fa-box
+              .node-info
+                strong#alertFromHub --
+                span.text-orange#alertFromDesc --
+            
+            .alert-center
+              span.alert-text#alertAmount -- xe cần chuyển
+              i.fa-solid.fa-arrow-right-long
+            
+            .alert-node
+              .node-info.text-right
+                strong#alertToHub --
+                span.text-red#alertToDesc --
+              .node-icon.bg-red-light
+                i.fa-solid.fa-box
+
+        // ---- KHỐI BẢNG LỊCH SỬ ----
+        .card.table-card
+          .card-header
+            h2.card-title Lệnh điều phối đang hoạt động & lịch sử
+            span.total-text#totalDispatch Tổng cộng: 0 lệnh
+          
+          .table-responsive
+            table.data-table
+              thead
+                tr
+                  th #
+                  th MÃ LỆNH
+                  th TUYẾN ĐIỀU PHỐI
+                  th SỐ LƯỢNG
+                  th THỜI GIAN
+                  th TRẠNG THÁI
+              tbody#dispatchHistory

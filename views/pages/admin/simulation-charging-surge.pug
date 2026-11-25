@@ -1,0 +1,122 @@
+extends ../../layouts/admin/default.pug
+
+block titleName
+  h1.dashboard-header__title Phân hệ Mô phỏng Kịch bản (What-If Simulation Suite)
+
+block main 
+  .simulation-page.container
+    
+    include ../../mixins/admin/simulation-tabs.pug
+    +simulationTabs('charging-surge')
+
+    .simulation-layout
+      
+      // ================= CỘT TRÁI =================
+      .simulation-left
+        .card.settings-card
+          .card-header
+            h2.card-title
+              i.fa-solid.fa-sliders.text-green
+              | THIẾT LẬP KỊCH BẢN
+
+          .card-body
+            .form-group
+              label.form-label HUB CHỊU TÁC ĐỘNG
+              select#simHubId.form-control
+            
+            .form-group
+              label.form-label KỊCH BẢN MÔ PHỎNG
+              select#simScenario.form-control
+                option(value="peak-hours") Cao điểm (Tan học / Tan làm)
+                option(value="event-surge") Sự kiện Đột xuất (Hội thảo / Thi cử)
+                option(value="night-charging") Sạc qua đêm (Nhu cầu thấp, thời gian dài)
+            
+            .form-group
+              label.form-label KHUNG GIỜ MÔ PHỎNG
+              select#simTimeFrame.form-control
+                option(value="16:30 - 17:30") 16:30 - 17:30 (Giờ cao điểm)
+                option(value="12:00 - 13:00") 12:00 - 13:00 (Giờ nghỉ trưa)
+                option(value="22:00 - 06:00") 22:00 - 06:00 (Qua đêm)
+            
+            //- ĐÃ CHUYỂN THÀNH INPUT ĐỂ NHẬP
+            .form-group
+              label.form-label CÔNG SẠC KHẢ DỤNG
+              input#simTotalPorts.form-control(type="number", value="8", min="1")
+              small.form-text.text-muted (Nhập số lượng cổng sạc đang hoạt động)
+            
+            .form-group
+              label.form-label SỐ XE ĐANG SẠC HIỆN TẠI
+              input#simCurrentCharging.form-control(type="number", value="6", min="0")
+            
+            .form-group
+              label.form-label NHU CẦU SẠC GIẢ ĐỊNH (TỔNG)
+              input#simSimulatedDemand.form-control(type="number", value="17", min="1")
+              small.form-text.text-muted (Tổng số xe đang sạc + xe sắp tới)
+
+          .card-footer
+            button#btnRunSimulation.btn-run(type="button")
+              i.fa-solid.fa-play
+              | Chạy mô phỏng kịch bản
+
+      // ================= CỘT PHẢI =================
+      .simulation-right
+        
+        #simulationEmptyState.empty-state
+          .empty-icon-box
+            i.fa-regular.fa-gem
+          h3.empty-state__title Chưa có kết quả mô phỏng
+          p.empty-state__desc Vui lòng thiết lập thông số ở cột bên trái và bấm "Chạy mô phỏng kịch bản" để xem đánh giá tác động.
+
+        #simulationResultWrapper.simulation-result-wrapper(style="display: none;")
+          
+          .simulation-section
+            h3.section-label SO SÁNH TRẠNG THÁI
+            .status-compare-grid
+              .status-box.status-box--simulated(style="background: #fffcf0; border-color: #ffeeba;")
+                .status-box__title TRẠNG THÁI MÔ PHỎNG
+                .status-box__list
+                  .status-row
+                    span Nhu cầu sạc giả định:
+                    strong#resSimDemand --
+                  .status-row
+                    span Mức quá tải hàng chờ:
+                    strong.text-red#resSimOverload --
+                  .status-row
+                    span Kịch bản:
+                    strong#resScenarioName --
+
+          .simulation-section
+            h3.section-label KẾT QUẢ ĐÁNH GIÁ
+            .evaluation-grid
+              .eval-card.eval-card--gray
+                span.eval-card__label Cổng sạc khả dụng
+                .eval-card__value#resEvalPorts --
+                span.eval-card__sub#resEvalHubName --
+                
+              .eval-card.eval-card--orange
+                span.eval-card__label Nhu cầu sạc giả định
+                .eval-card__value#resEvalDemand --
+                span.eval-card__sub Trong khung giờ đã chọn
+                
+              .eval-card.eval-card--red#cardUnserved
+                span.eval-card__label Chưa thể phục vụ ngay
+                .eval-card__value#resEvalUnserved --
+                span.eval-card__sub#resEvalUnservedSub --
+
+          .recommendation-card
+            .recommendation-header
+              .recommendation-header__title-group
+                i.fa-regular.fa-lightbulb.text-green
+                h3 KHUYẾN NGHỊ VẬN HÀNH
+              span#resStatusBadge.recommendation-header__badge --
+              
+            .recommendation-body
+              .recommendation-content
+                h4#resRecTitle --
+                p#resRecContent --
+                
+                .action-plan-box#actionPlanBox(style="display: none; margin-top: 16px; background: #fff; padding: 16px; border-radius: 8px; border: 1px solid #ffeeba;")
+                  h5(style="color: #d97706; margin-bottom: 12px; font-weight: 600;")
+                    i.fa-solid.fa-list-check
+                    |  Phương án phân bổ xe đề xuất
+                  ul#actionList(style="padding-left: 20px; margin: 0; font-size: 14px; color: #4b5563; line-height: 1.8;")

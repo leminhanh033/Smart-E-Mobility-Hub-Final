@@ -1,0 +1,82 @@
+extends ../../layouts/admin/default.pug
+
+block titleName
+  h1.dashboard-header__title Lịch sạc thông minh
+
+block main 
+  .smart-charging-page.container
+    
+    // =========================================
+    // KHU VỰC CHỌN HUB
+    // =========================================
+    .hub-selector-card
+      div.column
+        label.hub-label MOBILITY HUB
+        .hub-select-wrapper
+          select#scHubId.form-control
+            //- JS sẽ đổ dữ liệu vào
+      
+      //- .auto-optimize-status
+        span#scOptimizeTime Lịch tự động đã được tối ưu lúc --:--
+
+    // =========================================
+    // HÀNG THỐNG KÊ (STATS)
+    // =========================================
+    .stats-row
+      .stat-box
+        span.stat-label Tổng cổng sạc
+        .stat-value#scTotalPorts 0
+        span.stat-sub#scPortTypes AC: 0 &bull; DC: 0
+      
+      .stat-box
+        span.stat-label Cổng khả dụng
+        .stat-value.text-green#scAvailablePorts 0
+        span.stat-sub#scPortsInUseText 0 cổng đang sạc / bảo trì
+      
+      .stat-box
+        span.stat-label Xe đang chờ sạc
+        .stat-value#scWaitingVehicles 0
+        span.stat-sub#scScheduledVehicles 0 xe đã lên lịch
+      
+      .stat-box
+        span.stat-label Hàng chờ khẩn cấp
+        .stat-value.text-red#scUrgentVehicles 0
+        span.stat-sub Có phương tiện pin dưới 10%
+
+    // =========================================
+    // KHU VỰC CHÍNH (2 CỘT)
+    // =========================================
+    .main-grid
+      // ================= CỘT TRÁI: HÀNG CHỜ =================
+      .col-left
+        .card
+          .card-header
+            .header-left
+              h2.card-title Hàng chờ & Lịch sạc
+              p.card-subtitle Ưu tiên theo mức pin và lịch sử dụng gần nhất. Kéo thả để can thiệp thủ công.
+            .header-right
+              span.badge-count#scQueueCount 0 phương tiện
+
+          .card-body.vehicle-queue-list#vehicleQueueList
+            //- JS sẽ render danh sách xe vào đây
+
+      // ================= CỘT PHẢI: TIẾN TRÌNH SẠC =================
+      .col-right
+        .card
+          .card-header
+            .header-left
+              h2.card-title Tiến trình sạc
+              p.card-subtitle Phân bổ tự động phương tiện vào các cổng sạc.
+            .header-right
+              span.badge-count#scPortCount 0 cổng
+
+          .card-body.port-schedule-list#portScheduleList
+            //- JS sẽ render danh sách cổng vào đây
+
+    // =========================================
+    // THANH HÀNH ĐỘNG (FOOTER)
+    // =========================================
+    .page-actions
+      button#scBtnRefresh.btn-secondary(type="button") Cập nhật dữ liệu
+      button#scBtnAuto.btn-dark(type="button") Khôi phục lịch tự động
+      button#scBtnSave.btn-primary(type="button") Lưu thay đổi

@@ -1,0 +1,143 @@
+extends ../../layouts/admin/default.pug
+
+block titleName
+  h1.dashboard-header__title NOC Network Control Center
+
+block main
+  .dashboard-content.container
+
+    // ============================================================
+    // 1. STATS GRID
+    // ============================================================
+    .stats-grid
+      .stat-card
+        .stat-card__header
+          .stat-card__icon.icon--green
+            i.fa-solid.fa-charging-station
+          .stat-card__info
+            span.stat-card__label Trạm đang hoạt động
+            .stat-card__value #{stats.activeHubs} / #{stats.totalHubs}
+
+      .stat-card
+        .stat-card__header
+          .stat-card__icon.icon--blue
+            i.fa-solid.fa-bolt
+          .stat-card__info
+            span.stat-card__label Phiên sạc đang hoạt động
+            .stat-card__value #{stats.activeCharging}
+
+      .stat-card
+        .stat-card__header
+          .stat-card__icon.icon--purple
+            i.fa-solid.fa-plug
+          .stat-card__info
+            span.stat-card__label Cổng sạc
+            .stat-card__value #{stats.usedAC + stats.usedDC} / #{stats.totalAC + stats.totalDC}
+
+      .stat-card
+        .stat-card__header
+          .stat-card__icon.icon--orange
+            i.fa-solid.fa-triangle-exclamation
+          .stat-card__info
+            span.stat-card__label Cảnh báo
+            .stat-card__value= stats.totalAlerts
+
+    // ============================================================
+    // 2. MAIN GRID: Map + Sidebar (Live + Alerts)
+    // ============================================================
+    .dashboard-grid
+
+      // ---------- LEFT: MAP ----------
+      .dashboard-col-left
+        .section-block.map-section
+          .section-header
+            h2.section-title
+              i.fa-solid.fa-map-location-dot
+              div
+                div.header Bản đồ mạng lưới Hub
+                span.context Khu đô thị ĐHQG-HCM • Theo dõi realtime
+            .map-legend
+              span.legend-item
+                span.dot.dot--green
+                | Hoạt động
+              span.legend-item
+                span.dot.dot--orange
+                | Cần chú ý
+              span.legend-item
+                span.dot.dot--red
+                | Quá tải
+
+          .map-wrapper(style="position: relative; width: 100%; height: 550px; border-radius: 12px; overflow: hidden; margin-top: 16px; z-index: 1;")
+            #hubMapDashboard(style="width: 100%; height: 100%;")
+            
+            #hubDetailPanel.hub-detail-panel(style="display: none;")
+              .panel-header
+                .panel-title-group
+                  .title-row
+                    h2#panelHubName --
+                    span#panelStatusBadge.panel-badge --
+                  p#panelAddress --
+                button#btnClosePanel.btn-close-panel(type="button")
+                  i.fa-solid.fa-xmark
+
+              .panel-body
+                .stat-row
+                  span.stat-label Chỗ đỗ
+                  strong#panelParking.stat-value --
+                .stat-row
+                  span.stat-label Cổng AC
+                  strong#panelAC.stat-value --
+                .stat-row
+                  span.stat-label Cổng DC
+                  strong#panelDC.stat-value --
+
+              //- .panel-footer
+              //-   button.btn-action.btn-dispatch(type="button")
+              //-     i.fa-solid.fa-arrows-rotate
+              //-     | Điều phối xe
+              //-   button.btn-action.btn-incident(type="button")
+              //-     i.fa-solid.fa-triangle-exclamation
+              //-     | Xử lý sự cố
+
+      // ---------- RIGHT: SIDEBAR ----------
+      .dashboard-col-right
+
+        .live-section
+          .live-section__header
+            h2.live-section__title
+              i.fa-solid.fa-tower-broadcast
+              | Hoạt động gần đây
+            span.live-section__badge
+              span.dot
+              | LIVE
+
+          .live-section__list
+            if recentActivities && recentActivities.length > 0
+              each a in recentActivities
+                .live-item
+                  .live-item__icon(class=a.color)
+                    i.fa-solid(class=a.icon)
+                  .live-item__info
+                    strong.live-item__name= a.name
+                    span.live-item__desc #{a.hubName} &bull; #{a.timeStr}
+                  span.live-item__status(class='status--' + a.status)= a.statusText
+            else
+              p.live-empty Chưa có hoạt động nào.
+
+        .alert-section
+          .alert-section__header
+            i.fa-solid.fa-circle-exclamation
+            h2.alert-section__title Cảnh báo hệ thống
+
+          .alert-section__list
+            if alerts && alerts.length > 0
+              each al in alerts
+                .alert-item
+                  p.alert-item__text
+                    strong= al.hubName
+                    |  - #{al.text}
+                  span.alert-item__tag(class='tag--' + al.level)= al.levelText
+            else
+              p.live-empty Không có cảnh báo nào.
+  
+  script(src="/assets/admin/map-dashboard.js")

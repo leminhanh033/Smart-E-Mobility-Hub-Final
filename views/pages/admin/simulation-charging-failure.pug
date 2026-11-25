@@ -1,0 +1,118 @@
+extends ../../layouts/admin/default.pug
+
+block titleName
+  h1.dashboard-header__title Phân hệ Mô phỏng Kịch bản (What-If Simulation Suite)
+
+block main 
+  .simulation-page.container
+    
+    include ../../mixins/admin/simulation-tabs.pug
+    +simulationTabs('charging-fail') //- Tab mặc định
+
+    .simulation-layout
+      
+      // ================= CỘT TRÁI =================
+      .simulation-left
+        .card.settings-card
+          .card-header
+            h2.card-title
+              i.fa-solid.fa-plug-circle-exclamation.text-red
+              | KỊCH BẢN: TRỤ SẠC GẶP SỰ CỐ
+
+          .card-body
+            .form-group
+              label.form-label MOBILITY HUB
+              select#simHubId.form-control
+                option(value="HUB_UIT_IU") HUB_UIT_IU (8 cổng)
+                option(value="HUB_BK_CS2") HUB_BK_CS2 (12 cổng)
+                option(value="HHUB_KTX_B") HUB_KTX_B (8 cổng)
+                option(value="HUB_METRO") HUB_METRO (10 cổng)
+            
+            .form-group
+              label.form-label SỐ CỔNG SẠC BỊ HỎNG
+              input#simBrokenPorts.form-control(type="number", value="3", min="0", placeholder="VD: 3")
+            
+            .form-group
+              label.form-label NHU CẦU SẠC TẠI TRẠM LÚC NÀY
+              input#simCurrentDemand.form-control(type="number", value="7", min="0", placeholder="Số xe cần sạc")
+              small.form-text.text-muted (Nhập số lượng xe đang cần sạc tại Hub)
+
+          .card-footer
+            button#btnRunSimulation.btn-run(type="button")
+              i.fa-solid.fa-play
+              | Chạy mô phỏng kịch bản
+
+      // ================= CỘT PHẢI =================
+      .simulation-right
+        
+        //- TRẠNG THÁI TRỐNG (Hiển thị mặc định)
+        #simulationEmptyState.empty-state
+          .empty-icon-box
+            i.fa-regular.fa-gem
+          h3.empty-state__title Chưa có kết quả mô phỏng
+          p.empty-state__desc Vui lòng thiết lập thông số ở cột bên trái và bấm "Chạy mô phỏng kịch bản" để xem đánh giá tác động.
+
+        //- KHỐI HIỂN THỊ KẾT QUẢ (Ẩn ban đầu)
+        #simulationResultWrapper.simulation-result-wrapper(style="display: none;")
+          
+          .simulation-section
+            h3.section-label SO SÁNH TRẠNG THÁI
+            .status-compare-grid
+              .status-box
+                .status-box__title TRẠNG THÁI HIỆN TẠI
+                .status-box__list
+                  .status-row
+                    span Tổng công sạc:
+                    strong#resCurrentPorts --
+                  .status-row
+                    span Nhu cầu sạc:
+                    strong#resCurrentDemand --
+              .status-box.status-box--simulated(style="background: #fffcf0; border-color: #ffeeba;")
+                .status-box__title TRẠNG THÁI MÔ PHỎNG
+                .status-box__list
+                  .status-row
+                    span Cổng sạc bị hỏng:
+                    strong.text-red#resSimBroken --
+                  .status-row
+                    span Cổng sạc còn lại:
+                    strong#resSimRemaining --
+                  .status-row
+                    span Cảnh báo:
+                    strong.text-red#resSimWarning --
+
+          .simulation-section
+            h3.section-label KẾT QUẢ ĐÁNH GIÁ
+            .evaluation-grid
+              .eval-card.eval-card--gray
+                span.eval-card__label Cổng sạc có hoạt động
+                .eval-card__value#resEvalPorts --
+                span.eval-card__sub.text-red#resEvalLost --
+              .eval-card.eval-card--orange
+                span.eval-card__label Nhu cầu sạc tại trạm
+                .eval-card__value#resEvalDemand --
+                span.eval-card__sub Cần duy trì hệ thống
+              .eval-card.eval-card--red#cardUnserved
+                span.eval-card__label Chưa thể phục vụ
+                .eval-card__value#resEvalUnserved --
+                span.eval-card__sub#resEvalUnservedSub --
+
+          .recommendation-card
+            .recommendation-header
+              .recommendation-header__title-group
+                i.fa-regular.fa-lightbulb.text-green
+                h3 KHUYẾN NGHỊ VẬN HÀNH
+              span#resStatusBadge.recommendation-header__badge --
+            .recommendation-body
+              .recommendation-content
+                h4#resRecTitle --
+                p#resRecContent --
+                
+                //- KHỐI MỚI: HIỂN THỊ PHƯƠNG ÁN XỬ LÝ (CHỜ HOẶC ĐIỀU CHUYỂN)
+                .action-plan-box#actionPlanBox(style="display: none; margin-top: 16px; background: #fff; padding: 16px; border-radius: 8px; border: 1px solid #ffeeba;")
+                  h5(style="color: #d97706; margin-bottom: 12px; font-weight: 600;")
+                    i.fa-solid.fa-list-check
+                    |  Phương án phân bổ xe đề xuất
+                  ul#actionList(style="padding-left: 20px; margin: 0; font-size: 14px; color: #4b5563; line-height: 1.8;")
+                    //- Render danh sách tại đây
+                
+                p.recommendation-alternative#resRecTicket(style="display: none; margin-top: 12px;")

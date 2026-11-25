@@ -1,0 +1,101 @@
+extends ../../layouts/user/default.pug
+
+block main
+  main.schedule-charging
+
+    // ================= LEFT =================
+    section.schedule-charging__main
+      // Tabs
+      .book-parking__tabs
+        a.tab-btn(href="/book/parking") Đặt chỗ đỗ
+        a.tab-btn(href="/book/charging/schedule") Lập lịch sạc
+        a.tab-btn.active(href="/book/charging/demand") Đăng ký nhu cầu sạc
+
+      .schedule-charging__header
+        h1.schedule-charging__title Gửi nhu cầu sạc xe điện
+        p.schedule-charging__subtitle Chọn Hub và xe cá nhân. Smart Charging sẽ xếp hàng và cấp cổng phù hợp khi có chỗ.
+
+      // ---------- CHỌN HUB ----------
+      .schedule-section
+        h2.schedule-section__title
+          span.schedule-section__num 1
+          | CHỌN MOBILITY HUB MUỐN SẠC
+
+        if hubList && hubList.length > 0
+          .hub-picker
+            each hub, index in hubList
+              label.hub-pick(class=(index === 0 ? 'hub-pick--selected' : ''))
+                input(
+                  type="radio"
+                  name="hub"
+                  value=hub._id
+                  data-name=hub.name
+                  data-address=hub.address
+                  checked=(index === 0)
+                )
+                .hub-pick__icon
+                  i.fa-solid.fa-charging-station
+                .hub-pick__info
+                  strong.hub-pick__name= hub.name
+                  span.hub-pick__address= hub.address
+                i.fa-solid.fa-circle-check.hub-pick__check
+        else
+          p Không có Mobility Hub nào khả dụng.
+
+      .schedule-section
+        h2.schedule-section__title
+          span.schedule-section__num 2
+          | CHỌN XE CÁ NHÂN VÀ NHU CẦU SẠC
+        if listVehicles && listVehicles.length
+          .energy-grid
+            .energy-item
+              label.energy-item__label(for="demandVehicle") XE CẦN SẠC
+              select#demandVehicle.input-field
+                each vehicle in listVehicles
+                  option(value=vehicle._id, data-pin=(vehicle.pin == null ? '' : vehicle.pin)) #{vehicle.model} — #{vehicle.license}
+            .energy-item
+              label.energy-item__label MỨC PIN HIỆN TẠI (DỮ LIỆU HỆ THỐNG)
+              strong#demandPin Chưa có dữ liệu
+            .energy-item
+              label.energy-item__label(for="demandPortType") LOẠI CỔNG
+              select#demandPortType.input-field
+                option(value="AC") AC
+                option(value="DC") DC
+            .energy-item
+              label.energy-item__label(for="demandTarget") MỨC PIN MONG MUỐN
+              select#demandTarget.input-field
+                option(value="85") 85%
+                option(value="100") 100%
+                option(value="80") 80%
+                option(value="70") 70%
+            .energy-item
+              label.energy-item__label(for="demandDuration") THỜI LƯỢNG
+              select#demandDuration.input-field
+                option(value="45") 45 phút
+                option(value="60") 60 phút
+                option(value="120") 120 phút
+            .energy-item
+              label.energy-item__label(for="demandReadyAt") THỜI ĐIỂM SỚM NHẤT CÓ THỂ SẠC (TÙY CHỌN)
+              input#demandReadyAt.input-field(type="datetime-local")
+              small Để trống nếu muốn vào hàng chờ ngay.
+        else
+          p Bạn chưa có xe cá nhân đã đăng ký.
+          a.btn-outline(href="/book/charging/schedule") Thêm xe cá nhân tại trang Lập lịch sạc
+
+    // ================= RIGHT: Summary =================
+    aside.schedule-charging__summary
+      h2.summary__label YÊU CẦU SẠC
+
+      .summary__block
+        span.summary__block-label Mobility Hub đã chọn
+        strong#summaryHubName.summary__block-value Chưa chọn Hub
+        span#summaryHubAddress.summary__block-sub --
+
+      .summary__warning
+        i.fa-solid.fa-triangle-exclamation
+        p
+          | Yêu cầu sẽ vào hàng chờ Smart Charging. Chưa giữ cổng, không tính phí giữ cổng. Theo dõi kết quả tại Hoạt động.
+
+      .summary__actions
+        button.btn-outline#btnCancelDemand(type="button") Hủy
+        button#btnConfirmDemand.btn-primary(type="button", disabled=(!hubList || !hubList.length || !listVehicles || !listVehicles.length)) Gửi nhu cầu

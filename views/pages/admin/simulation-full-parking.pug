@@ -1,0 +1,130 @@
+extends ../../layouts/admin/default.pug
+
+block titleName
+  h1.dashboard-header__title Phân hệ Mô phỏng Kịch bản (What-If Simulation Suite)
+
+block main 
+  .simulation-page.container
+    
+    include ../../mixins/admin/simulation-tabs.pug
+    +simulationTabs('parking')
+
+    .simulation-layout
+      
+      // ================= CỘT TRÁI =================
+      .simulation-left
+        .card.settings-card
+          .card-header
+            h2.card-title
+              i.fa-solid.fa-sliders.text-green
+              | THIẾT LẬP KỊCH BẢN
+
+          .card-body
+            .form-group
+              label.form-label MOBILITY HUB
+              select#parkingHubId.form-control
+                option(value="HUB_BK_CS2") HUB_BK_CS2 (ĐH Bách Khoa CS2)
+                option(value="HUB_METRO") HUB_METRO (Ga Metro ĐHQG)
+                option(value="HUB_UIT_IU") HUB_UIT_IU (ĐH CNTT - Quốc Tế)
+            
+            .form-group
+              label.form-label KHUNG GIỜ MÔ PHỎNG
+              select#parkingTimeFrame.form-control
+                option(value="16:30 - 17:30") 16:30 - 17:30 (Giờ cao điểm)
+                option(value="12:00 - 13:00") 12:00 - 13:00 (Giờ nghỉ trưa)
+            
+            .form-group
+              label.form-label SỨC CHỨA BÃI ĐỖ (TỔNG SỐ CHỖ)
+              input#parkingTotalCapacity.form-control(type="number", value="25", min="1")
+            
+            .form-group
+              label.form-label SỐ CHỖ ĐANG SỬ DỤNG
+              input#parkingCurrentOccupied.form-control(type="number", value="20", min="0")
+              small.form-text.text-muted (Không vượt quá sức chứa)
+            
+            .form-group
+              label.form-label NHU CẦU XE VÀO HUB (GIẢ ĐỊNH)
+              input#parkingIncomingDemand.form-control(type="number", value="12", min="0")
+              small.form-text.text-muted (Số lượng xe sắp đổ về trạm)
+
+          .card-footer
+            button#btnRunParkingSim.btn-run(type="button")
+              i.fa-solid.fa-play
+              | Chạy mô phỏng kịch bản
+
+      // ================= CỘT PHẢI =================
+      .simulation-right
+        
+        //- TRẠNG THÁI TRỐNG (Hiển thị mặc định)
+        #parkingEmptyState.empty-state
+          .empty-icon-box
+            i.fa-regular.fa-gem
+          h3.empty-state__title Chưa có kết quả mô phỏng
+          p.empty-state__desc Vui lòng thiết lập thông số bãi đỗ ở cột bên trái và bấm "Chạy mô phỏng" để xem đánh giá.
+
+        //- KHỐI HIỂN THỊ KẾT QUẢ (Ẩn ban đầu)
+        #parkingResultWrapper.simulation-result-wrapper(style="display: none;")
+          
+          //- KHỐI 1: SO SÁNH TRẠNG THÁI
+          .simulation-section
+            h3.section-label SO SÁNH TRẠNG THÁI
+            .status-compare-grid
+              .status-box.status-box--current
+                .status-box__title TRẠNG THÁI HIỆN TẠI
+                .status-box__list
+                  .status-row
+                    span Sức chứa bãi đỗ:
+                    strong#resParkingCapacity --
+                  .status-row
+                    span Đang sử dụng:
+                    strong.text-orange#resParkingOccupied --
+                  .status-row
+                    span Chỗ trống thực tế:
+                    strong.text-green#resParkingAvailable --
+                    
+              .status-box.status-box--simulated(style="background: #fffcf0; border-color: #ffeeba;")
+                .status-box__title TRẠNG THÁI MÔ PHỎNG
+                .status-box__list
+                  .status-row
+                    span Nhu cầu vào Hub:
+                    strong#resParkingIncoming --
+                  .status-row
+                    span Mức vượt sức chứa:
+                    strong.text-red#resParkingOverflow --
+                  .status-row
+                    span Cảnh báo:
+                    strong#resParkingWarning --
+
+          //- KHỐI 2: KẾT QUẢ ĐÁNH GIÁ
+          .simulation-section
+            h3.section-label KẾT QUẢ ĐÁNH GIÁ
+            .evaluation-grid
+              .eval-card.eval-card--gray
+                span.eval-card__label Chỗ trống hiện tại
+                .eval-card__value#resEvalAvailable --
+                span.eval-card__sub#resEvalHubName --
+                
+              .eval-card.eval-card--orange
+                span.eval-card__label Nhu cầu xe vào Hub
+                .eval-card__value#resEvalIncoming --
+                span.eval-card__sub Trong khung giờ đã chọn
+                
+              .eval-card.eval-card--red#cardOverflow
+                span.eval-card__label Không thể tiếp nhận
+                .eval-card__value#resEvalOverflow --
+                span.eval-card__sub#resEvalOverflowSub --
+
+          //- KHỐI 3: KHUYẾN NGHỊ VẬN HÀNH
+          .recommendation-card
+            .recommendation-header
+              .recommendation-header__title-group
+                i.fa-regular.fa-lightbulb.text-green
+                h3 KHUYẾN NGHỊ VẬN HÀNH THÔNG MINH
+              span#resParkingBadge.recommendation-header__badge --
+              
+            .recommendation-body
+              .recommendation-content
+                h4#resParkingRecTitle --
+                p#resParkingRecContent --
+                
+                ul#resParkingSmartActions(style="margin-top: 16px; padding-left: 20px; font-size: 14px; color: #374151; line-height: 1.8;")
