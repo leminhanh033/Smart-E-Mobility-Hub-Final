@@ -810,7 +810,7 @@ document.querySelectorAll(".incident-row").forEach((row) => {
     const priority = row.getAttribute("data-priority") || "";
     const status = row.getAttribute("data-status") || "Pending";
     const rawVehicle = (row.getAttribute("data-vehicle") || "").trim();
-
+    console.log(status);
     const statusLabelMap = {
       "Pending": "Chờ xử lý",
       "In Progress": "Đang xử lý",
@@ -818,7 +818,7 @@ document.querySelectorAll(".incident-row").forEach((row) => {
     };
 
     const vehicleEl = document.getElementById("detailVehicle");
-
+    const vehicleId = row.getAttribute("data-vehicle-id") || "";
     if (vehicleEl) {
       const isHubIssue =
         !vehicleId ||
@@ -827,8 +827,6 @@ document.querySelectorAll(".incident-row").forEach((row) => {
       vehicleEl.textContent = isHubIssue
         ? "Sự cố trạm Hub"
         : rawVehicle || vehicleId;
-
-      if (vehicleRow) vehicleRow.style.display = "";
     }
 
     // Đắp vào panel chi tiết
