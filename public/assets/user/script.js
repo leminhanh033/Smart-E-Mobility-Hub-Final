@@ -875,7 +875,7 @@ if (cancelBtns.length > 0) {
       return;
     }
 
-    let value = getSelectedPinValue();
+    let value = randomPin0To40();
     if (randomize || value === null) {
       value = randomPin0To40();
       selectedOption.dataset.pin = String(value);
@@ -973,7 +973,7 @@ if (cancelBtns.length > 0) {
       return;
     }
 
-    const startPin = getSelectedPinValue();
+    const startPin = randomPin0To40();
 
     btnConfirm.disabled = true;
     const originalText = btnConfirm.textContent;

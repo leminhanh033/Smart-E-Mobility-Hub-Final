@@ -6,7 +6,7 @@ const chargingBookingModel = require("../../models/booking-charging.model")
 const vehiclemodel = require("../../models/vehicle.model");
 const vehicleOwnermodel = require("../../models/vehicleOwner.model");
 const moment = require("moment")
-const chargingPortmodel = require("../../models/chargingPort.model");
+const chargingPortModel = require("../../models/chargingPort.model");
 const chargingDemandModel=require("../../models/charging-demand.model");
 const Demand = require('../../models/charging-demand.model'); 
 

@@ -34,10 +34,11 @@
     );
   }
 
-  // ===== Queue item =====
-  function renderQueueItem(b, i, onDrop) {
+  function renderQueueItem(b, i) {
     const item = make('div', null, 'queue-item');
     item.draggable = true;
+    item.dataset.index = i;
+    item.dataset.id = b.id;
     item.append(make('span', `${i + 1}`, 'queue-index'));
 
     const main = make('div', null, 'queue-main');
@@ -70,16 +71,10 @@
       item.classList.add('dragging');
     });
     item.addEventListener('dragend', () => item.classList.remove('dragging'));
-    item.addEventListener('dragover', (e) => e.preventDefault());
-    item.addEventListener('drop', (e) => {
-      e.preventDefault();
-      onDrop(e.dataTransfer.getData('text/plain'), i);
-    });
 
     return item;
   }
 
-  // ===== Port card (ngang, 1 hàng) =====
   function renderPortCard(p) {
     const card = make('div', null, 'port-card');
 
@@ -151,23 +146,32 @@
     options(hub, hubs.map((h) => ({ id: String(h._id), name: h.name })));
 
     let rows = [];
+    let dirty = false;
+
+    queue.addEventListener('dragover', (e) => e.preventDefault());
+    queue.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const target = e.target.closest('.queue-item');
+      if (!target) return;
+      const draggedId = e.dataTransfer.getData('text/plain');
+      const targetIdx = Number(target.dataset.index);
+      if (Number.isNaN(targetIdx)) return;
+
+      const index = rows.findIndex((x) => x.id === draggedId);
+      if (index < 0 || index === targetIdx) return;
+
+      const [row] = rows.splice(index, 1);
+      rows.splice(targetIdx, 0, row);
+      dirty = true;
+      renderQueue();
+    });
 
     function renderQueue() {
       if (!rows.length) {
         queue.replaceChildren(make('p', 'Không có xe chờ', 'queue-empty'));
         return;
       }
-      queue.replaceChildren(
-        ...rows.map((b, i) =>
-          renderQueueItem(b, i, (draggedId, targetIdx) => {
-            const index = rows.findIndex((x) => x.id === draggedId);
-            if (index < 0 || index === targetIdx) return;
-            const [row] = rows.splice(index, 1);
-            rows.splice(targetIdx, 0, row);
-            renderQueue();
-          })
-        )
-      );
+      queue.replaceChildren(...rows.map((b, i) => renderQueueItem(b, i)));
     }
 
     async function load() {
@@ -215,21 +219,24 @@
             ids: rows.map((x) => x.id),
             automatic,
           });
-          alert(r.message);
+
+          let msg = r.message;
+          alert(msg);
+
           await load();
         } catch (e) {
           showError(e);
         } finally {
           b.disabled = false;
+          dirty = false;
         }
       });
     }
 
     await load();
 
-    // Tự reload 3s để progress + trạng thái "sắp xong" luôn mới
     setInterval(() => {
-      if (!document.hidden && hub.value) load().catch(() => {});
+      if (!document.hidden && hub.value && !dirty) load().catch(() => {});
     }, 3000);
   }
 

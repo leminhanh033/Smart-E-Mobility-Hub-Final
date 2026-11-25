@@ -20,6 +20,7 @@ const chargingDemandSchema = new Schema(
     expectedEndAt: { type: Date, default: null },
 
     cost: { type: Number, min: 0, default: 0 },           // Tổng tiền thanh toán
+    manualOrder: { type: Number, default: Number.MAX_SAFE_INTEGER },
 
     status: {
       type: String,

@@ -1,47 +1,54 @@
-const Hub=require('../models/hub.model');
-const Owner=require('../models/vehicleOwner.model');
-const Port=require('../models/chargingPort.model');
-const Booking=require('../models/booking-charging.model');
+const Hub = require('../models/hub.model');
+const Owner = require('../models/vehicleOwner.model');
+const Port = require('../models/chargingPort.model');
+const Booking = require('../models/booking-charging.model');
 const Demand = require('../models/charging-demand.model');
 
-const {transaction,fail}=require('./atomic');
-const nowTime=v=>v?new Date(v).getTime():Number.MAX_SAFE_INTEGER;
-const pinValue=v=>typeof v==='number'&&Number.isFinite(v)?v:101;
-function sortQueue(rows){return [...rows].sort((a,b)=>{
-  const manualA=a.queueOrder??Number.MAX_SAFE_INTEGER,manualB=b.queueOrder??Number.MAX_SAFE_INTEGER;
-  return manualA-manualB||pinValue(a.vehicle?.pin)-pinValue(b.vehicle?.pin)||nowTime(a.vehicle?.nextUseAt)-nowTime(b.vehicle?.nextUseAt)||nowTime(a.createdAt)-nowTime(b.createdAt)||String(a._id).localeCompare(String(b._id));
-});}
-async function queueRows(hubId,session){
-  const query=Booking.find({hubID:hubId,status:'active',portID:null}).lean();if(session)query.session(session);const rows=await query;
-  const q=Owner.find({_id:{$in:rows.map(r=>r.vehicleOwnerID)}}).lean();if(session)q.session(session);const owners=await q;
-  const map=new Map(owners.map(v=>[String(v._id),v]));return sortQueue(rows.map(r=>({...r,vehicle:map.get(String(r.vehicleOwnerID))})));}
-async function reservePort(booking,session){
-  const port=await Port.findOneAndUpdate({hubID:String(booking.hubID),type:booking.portType,status:'active'},{$set:{status:'charging',vehicleUsed:String(booking.vehicleOwnerID)}},{session,returnDocument:'after',sort:{_id:1}});
-  if(!port)return null;
-  const field=booking.portType==='AC'?'ACUsed':'DCUsed';
-  const max=booking.portType==='AC'?'ACNumber':'DCNumber';
-  const hub=await Hub.findOneAndUpdate({_id:booking.hubID,status:'active',turnOn:true,$expr:{$lt:['$'+field,'$'+max]}},{$inc:{[field]:1}},{session});if(!hub)fail('Hub không hoạt động.');
+const { transaction, fail } = require('./atomic');
+const nowTime = v => v ? new Date(v).getTime() : Number.MAX_SAFE_INTEGER;
+const pinValue = v => typeof v === 'number' && Number.isFinite(v) ? v : 101;
+function sortQueue(rows) {
+  return [...rows].sort((a, b) => {
+    const manualA = a.queueOrder ?? Number.MAX_SAFE_INTEGER, manualB = b.queueOrder ?? Number.MAX_SAFE_INTEGER;
+    return manualA - manualB || pinValue(a.vehicle?.pin) - pinValue(b.vehicle?.pin) || nowTime(a.vehicle?.nextUseAt) - nowTime(b.vehicle?.nextUseAt) || nowTime(a.createdAt) - nowTime(b.createdAt) || String(a._id).localeCompare(String(b._id));
+  });
+}
+async function queueRows(hubId, session) {
+  const query = Booking.find({ hubID: hubId, status: 'active', portID: null }).lean(); if (session) query.session(session); const rows = await query;
+  const q = Owner.find({ _id: { $in: rows.map(r => r.vehicleOwnerID) } }).lean(); if (session) q.session(session); const owners = await q;
+  const map = new Map(owners.map(v => [String(v._id), v])); return sortQueue(rows.map(r => ({ ...r, vehicle: map.get(String(r.vehicleOwnerID)) })));
+}
+async function reservePort(booking, session) {
+  const port = await Port.findOneAndUpdate({ hubID: String(booking.hubID), type: booking.portType, status: 'active' }, { $set: { status: 'charging', vehicleUsed: String(booking.vehicleOwnerID) } }, { session, returnDocument: 'after', sort: { _id: 1 } });
+  if (!port) return null;
+  const field = booking.portType === 'AC' ? 'ACUsed' : 'DCUsed';
+  const max = booking.portType === 'AC' ? 'ACNumber' : 'DCNumber';
+  const hub = await Hub.findOneAndUpdate({ _id: booking.hubID, status: 'active', turnOn: true, $expr: { $lt: ['$' + field, '$' + max] } }, { $inc: { [field]: 1 } }, { session }); if (!hub) fail('Hub không hoạt động.');
   return port;
 }
-async function allocate(hubId){return transaction(async session=>{
-  const hub=await Hub.findOne({_id:hubId,status:'active',turnOn:true}).session(session);if(!hub)return 0;
-  // Write the hub document to serialize allocation and manual queue changes.
-  await Hub.updateOne({_id:hubId},{$inc:{chargingQueueVersion:1}},{session});
-  const rows=await queueRows(hubId,session);let count=0;
-  for(const booking of rows){
-    if(!booking.vehicle||booking.vehicle.status==='charging')continue;
-    if(nowTime(booking.scheduledStart||booking.startTime)>Date.now())continue;
-    const port=await reservePort(booking,session);if(!port)continue;
-    const updated=await Booking.updateOne({_id:booking._id,status:'active',portID:null},{$set:{portID:port._id,portCode:port.portCode,reservationFee:0}},{session});if(updated.modifiedCount!==1)fail('Hàng chờ đã thay đổi.');count++;
-  }return count;
-});}
-async function setOrder(hubId,ids,automatic=false){return transaction(async session=>{
-  const hub=await Hub.findOneAndUpdate({_id:hubId,status:'active',turnOn:true},{$inc:{chargingQueueVersion:1}},{session});if(!hub)fail('Hub không khả dụng.');
-  const rows=await queueRows(hubId,session);const current=new Set(rows.map(b=>String(b._id)));
-  if(!automatic&&(ids.length!==current.size||new Set(ids).size!==ids.length||ids.some(id=>!current.has(id))))fail('Hàng chờ đã thay đổi. Cập nhật dữ liệu rồi thử lại.');
-  if(automatic)await Booking.updateMany({hubID:hubId,status:'active',portID:null},{$unset:{queueOrder:1}},{session});
-  else for(let i=0;i<ids.length;i++)await Booking.updateOne({_id:ids[i],status:'active',portID:null},{$set:{queueOrder:i}},{session});
-});}
+async function allocate(hubId) {
+  return transaction(async session => {
+    const hub = await Hub.findOne({ _id: hubId, status: 'active', turnOn: true }).session(session); if (!hub) return 0;
+    // Write the hub document to serialize allocation and manual queue changes.
+    await Hub.updateOne({ _id: hubId }, { $inc: { chargingQueueVersion: 1 } }, { session });
+    const rows = await queueRows(hubId, session); let count = 0;
+    for (const booking of rows) {
+      if (!booking.vehicle || booking.vehicle.status === 'charging') continue;
+      if (nowTime(booking.scheduledStart || booking.startTime) > Date.now()) continue;
+      const port = await reservePort(booking, session); if (!port) continue;
+      const updated = await Booking.updateOne({ _id: booking._id, status: 'active', portID: null }, { $set: { portID: port._id, portCode: port.portCode, reservationFee: 0 } }, { session }); if (updated.modifiedCount !== 1) fail('Hàng chờ đã thay đổi.'); count++;
+    } return count;
+  });
+}
+async function setOrder(hubId, ids, automatic = false) {
+  return transaction(async session => {
+    const hub = await Hub.findOneAndUpdate({ _id: hubId, status: 'active', turnOn: true }, { $inc: { chargingQueueVersion: 1 } }, { session }); if (!hub) fail('Hub không khả dụng.');
+    const rows = await queueRows(hubId, session); const current = new Set(rows.map(b => String(b._id)));
+    if (!automatic && (ids.length !== current.size || new Set(ids).size !== ids.length || ids.some(id => !current.has(id)))) fail('Hàng chờ đã thay đổi. Cập nhật dữ liệu rồi thử lại.');
+    if (automatic) await Booking.updateMany({ hubID: hubId, status: 'active', portID: null }, { $unset: { queueOrder: 1 } }, { session });
+    else for (let i = 0; i < ids.length; i++)await Booking.updateOne({ _id: ids[i], status: 'active', portID: null }, { $set: { queueOrder: i } }, { session });
+  });
+}
 async function finish(id, userId, mode = 'stop') {
   return transaction(async (session) => {
     const query = {
@@ -149,25 +156,39 @@ async function start(id, userId) {
     const now = new Date();
     b.status = 'charging';
     b.startTime = now;
-    
+
     if (b.duration) {
-      b.endTime = new Date(now.getTime() + b.duration * 60000); 
+      b.endTime = new Date(now.getTime() + b.duration * 60000);
     }
 
     await b.save({ session });
     return b;
   });
 }
-let running=false;
-async function tick(){if(running)return;running=true;try{
-  const active=await Booking.find({status:'charging'}).select('startTime duration').lean();
-  for(const b of active){if(b.startTime&&Date.now()>=new Date(b.startTime).getTime()+b.duration*60000){try{await finish(String(b._id),null,'expire');}catch(e){console.error('Kết thúc sạc:',e.message);}}}
-  const hubs=await Hub.find({status:'active',turnOn:true}).select('_id').lean();for(const h of hubs){try{await allocate(String(h._id));}catch(e){console.error('Phân bổ sạc:',e.message);}}
-}finally{running=false;}}
+let running = false;
+async function tick() {
+  if (running) return; running = true; try {
+    const active = await Booking.find({ status: 'charging' }).select('startTime duration').lean();
+    for (const b of active) { if (b.startTime && Date.now() >= new Date(b.startTime).getTime() + b.duration * 60000) { try { await finish(String(b._id), null, 'expire'); } catch (e) { console.error('Kết thúc sạc:', e.message); } } }
+    const hubs = await Hub.find({ status: 'active', turnOn: true }).select('_id').lean(); for (const h of hubs) { try { await allocate(String(h._id)); } catch (e) { console.error('Phân bổ sạc:', e.message); } }
+  } finally { running = false; }
+}
 
-const SIMULATE_SECONDS = 15; // Giả lập cứ 15 giây là sạc đầy 1 xe
+const SIMULATE_SECONDS_PER_MINUTE = 2;
 const PRICE_PER_MINUTE = 500; // 1 phút x 500đ
 
+const CHARGE_RATE = {
+  AC: 1.5,   
+  DC: 4,     
+};
+
+function calcChargeMinutes(startPin, desiredPin, portType) {
+  const from = Math.max(0, Math.min(100, Number(startPin) || 0));
+  const to = Math.max(from, Math.min(100, Number(desiredPin) || 100));
+  const rate = CHARGE_RATE[portType] || CHARGE_RATE.AC;
+  const minutes = (to - from) / rate;
+  return Math.max(1, Math.ceil(minutes));
+}
 /**
  * Tự động gắn cổng trống cho hàng chờ demand (ưu tiên pin thấp nhất trước).
  */
@@ -180,7 +201,7 @@ async function dispatchDemandQueue(hubId, externalSession = null) {
       status: 'pending',
       scheduledStart: { $lte: now },
     })
-      .sort({ startPin: 1, createdAt: 1 })
+      .sort({ manualOrder: 1, startPin: 1, scheduledStart: 1, createdAt: 1 })
       .session(session);
 
     if (!pendingList.length) return [];
@@ -220,7 +241,16 @@ async function dispatchDemandQueue(hubId, externalSession = null) {
       demand.portCode = port.portCode;
       demand.status = 'charging';
       demand.startedAt = startTime;
-      demand.expectedEndAt = new Date(startTime.getTime() + SIMULATE_SECONDS * 1000);
+
+      const owner = await Owner.findById(demand.vehicleOwnerID).session(session).lean();
+
+      const startPin = demand.startPin ?? owner?.pin ?? 20;   // pin lúc bắt đầu
+      const actualMinutes = calcChargeMinutes(startPin, demand.desiredPin, demand.portType);
+
+      demand.actualDuration = actualMinutes;
+      demand.expectedEndAt = new Date(
+        startTime.getTime() + actualMinutes * SIMULATE_SECONDS_PER_MINUTE * 1000
+      );
       await demand.save({ session });
 
       assigned.push(demand);
@@ -255,7 +285,8 @@ async function tickSimulatedDemands() {
         }).session(session);
         if (!demand) return;
 
-        demand.cost = demand.duration * PRICE_PER_MINUTE;
+        const actualMinutes = demand.actualDuration || demand.duration;
+        demand.cost = actualMinutes * PRICE_PER_MINUTE;
         demand.status = 'completed';
         await demand.save({ session });
 

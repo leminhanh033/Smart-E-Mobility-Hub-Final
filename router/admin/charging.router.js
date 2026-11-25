@@ -138,7 +138,6 @@ router.get('/schedule/data/:id', async (req, res) => {
   }
 });
 router.post('/schedule/order', async (req, res) => {
-  const { dispatchDemandQueue } = require('../../services/charging-queue');
   try {
     const { hubId, ids, automatic } = req.body;
     if (!validId(hubId) || (!automatic && (!Array.isArray(ids) || ids.some((id) => !validId(id))))) {
@@ -147,19 +146,36 @@ router.post('/schedule/order', async (req, res) => {
 
     if (automatic) {
       await Promise.all([
-        Booking.updateMany({ hubID: hubId, status: 'active', portID: null }, { $set: { manualOrder: null } }),
-        Demand.updateMany({ hubID: hubId, status: 'pending' }, { $set: { manualOrder: null } }),
+        Booking.updateMany(
+          { hubID: hubId, status: 'active', portID: null },
+          { $unset: { queueOrder: 1 } }
+        ),
+        Demand.updateMany(
+          { hubID: hubId, status: 'pending' },
+          { $set: { manualOrder: Number.MAX_SAFE_INTEGER } }
+        ),
       ]);
     } else {
-      await Promise.all(
-        ids.map((itemId, idx) =>
-          Promise.all([
-            Booking.updateOne({ _id: itemId, hubID: hubId }, { $set: { manualOrder: idx + 1 } }),
-            Demand.updateOne({ _id: itemId, hubID: hubId }, { $set: { manualOrder: idx + 1 } }),
-          ])
-        )
-      );
+      const ops = [];
+      ids.forEach((itemId, idx) => {
+        ops.push(
+          Booking.updateOne(
+            { _id: itemId, hubID: hubId, status: 'active', portID: null },
+            { $set: { queueOrder: idx + 1 } }
+          ),
+          Demand.updateOne(
+            { _id: itemId, hubID: hubId, status: 'pending' },
+            { $set: { manualOrder: idx + 1 } }
+          )
+        );
+      });
+      await Promise.all(ops);
     }
+    // Log kiểm tra
+    const afterDemands = await Demand.find({ hubID: hubId, status: 'pending' })
+      .select('_id manualOrder startPin').lean();
+    const afterBookings = await Booking.find({ hubID: hubId, status: 'active', portID: null })
+      .select('_id manualOrder').lean();
 
     const allocated = await allocate(hubId);
     const assignedDemands = await dispatchDemandQueue(hubId);
@@ -167,8 +183,11 @@ router.post('/schedule/order', async (req, res) => {
 
     res.json({
       code: 'success',
-      message: `Đã lưu thứ tự. Cấp ${totalAllocated} cổng.`,
+      message: `Đã lưu thứ tự`,
       allocated: totalAllocated,
+      pendingBookings: await Booking.countDocuments({ hubID: hubId, status: 'active', portID: null }),
+      pendingDemands: await Demand.countDocuments({ hubID: hubId, status: 'pending' }),
+      freePorts: await Port.countDocuments({ hubID: hubId, status: 'active', vehicleUsed: null }),
     });
   } catch (e) {
     return handle(res, e);

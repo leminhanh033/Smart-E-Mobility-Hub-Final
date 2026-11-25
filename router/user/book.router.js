@@ -2,9 +2,9 @@ const router = require('express').Router();
 const hubmodel = require("../../models/hub.model");
 const parkingBookingModel = require("../../models/booking-parking.model")
 const vehicleOwnermodel = require("../../models/vehicleOwner.model");
-const chargingBookingModel=require("../../models/booking-charging.model")
-const  chargingPortmodel=require("../../models/chargingPort.model");
-const chargingDemandModel=require("../../models/charging-demand.model");
+const chargingBookingModel = require("../../models/booking-charging.model")
+const chargingPortmodel = require("../../models/chargingPort.model");
+const chargingDemandModel = require("../../models/charging-demand.model");
 router.get('/parking', async (req, res) => {
   const desID = req.query.destinationId;
   const filter = {
@@ -84,11 +84,11 @@ router.get('/charging/schedule', async (req, res) => {
 router.post('/vehicle/owner/create', async (req, res) => {
   try {
     const { license, type, model, batteryCapacity } = req.body;
-    const userId = req.account ? req.account._id : "6501abc123456789"; 
-    if(!license||!type||!model||!batteryCapacity){
+    const userId = req.account ? req.account._id : "6501abc123456789";
+    if (!license || !type || !model || !batteryCapacity) {
       return res.json({
-        code:"error",
-        message:"Vui lòng nhập đầu đủ thông tin"
+        code: "error",
+        message: "Vui lòng nhập đầu đủ thông tin"
       })
     }
 
@@ -111,8 +111,17 @@ router.post('/vehicle/owner/create', async (req, res) => {
 router.get('/charging/demand', async (req, res) => {
   const hubList = await hubmodel.find({ status: 'active', turnOn: true }).lean();
   const listVehicles = await vehicleOwnermodel.find({ userID: String(req.account._id) }).lean();
+  //Thời gian chọn trong vòng 1 ngày 
+  const now = new Date();
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+  const pad = (n) => String(n).padStart(2, '0');
+  const toLocal = (d) =>
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   res.render('pages/user/charging-demand', {
     title: 'Trang đăng ký nhu cầu sạc', activePage: 'book', hubList, listVehicles,
+    minDateTime: toLocal(now),
+    maxDateTime: toLocal(tomorrow),
   });
 });
 
@@ -247,7 +256,6 @@ router.post('/charging/demand', async (req, res) => {
       duration,
       scheduledStart: raw,
     } = req.body;
-
     if (!validId(hubId) || !validId(vehicleOwnerID) || !['AC', 'DC'].includes(portType)) {
       fail('Xe, Hub hoặc loại cổng không hợp lệ.');
     }
