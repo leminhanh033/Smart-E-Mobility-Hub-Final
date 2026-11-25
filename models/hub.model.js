@@ -15,7 +15,7 @@ const hub = new Schema({
   DCUsed:Number,
   DCNumber:Number,
   ACNumber:Number,
-  status:String,
+  status:String,//active,inactive,overload,maintenance
   turnOn:Boolean,
 },{
   timestamps:true,

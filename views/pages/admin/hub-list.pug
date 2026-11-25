@@ -127,19 +127,6 @@ block main
             tr
               td(colspan="8", style="text-align: center; padding: 20px;") Không có dữ liệu Hub nào.
 
-    // =========================================
-    // CẢNH BÁO CHÂN TRANG
-    // =========================================
-    //- .warning-banner
-      .warning-content
-        i.fa-solid.fa-triangle-exclamation
-        div
-          strong Quy tác ngoại lệ 2 (Rule Exception 2)
-          p Hệ thống từ chối tắt (Disable) Hub nếu còn phiên sạc hoặc lượt thuê xe đang chạy
-      .warning-actions
-        button.btn-text(type="button") Xem chi tiết
-        button.btn-close(type="button")
-          i.fa-solid.fa-xmark
 
     // =========================================
     // PHÂN TRANG
@@ -148,23 +135,6 @@ block main
       .pagination-info
         | Tổng cộng: 
         strong #{listHub.length} Mobility Hubs
-      
-      //- .pagination-controls
-      //-   .page-size
-      //-     span Hiển thị
-      //-     select
-      //-       option 10
-      //-       option 20
-      //-       option 50
-      //-     span / trang
-        
-      //-   .page-nav
-      //-     span Trang 1 / 1
-      //-     button.btn-page(type="button", disabled)
-      //-       i.fa-solid.fa-chevron-left
-      //-     button.btn-page.btn-page--active(type="button") 1
-      //-     button.btn-page(type="button", disabled)
-      //-       i.fa-solid.fa-chevron-right
     // =========================================
     // MODAL THÊM HUB MỚI
     // =========================================

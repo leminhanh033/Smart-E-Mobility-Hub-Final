@@ -20,7 +20,14 @@ block main
             select.form-control#type(name="type")
               each error in errorList 
                 option(value=error.id) #{error.name}
-
+        //- Mức độ ưu tiên
+        .form-group
+          label.form-group__label MỨC ĐỘ ƯU TIÊN
+          .select-wrapper
+            select.form-control#priority(name="priority")
+              option(value="Low", selected) Thấp (Low)
+              option(value="Medium") Trung bình (Medium)
+              option(value="Urgent") Khẩn cấp (Urgent)
         //- 3. Vị trí / Hub
         .form-group
           label.form-group__label VỊ TRÍ / HUB

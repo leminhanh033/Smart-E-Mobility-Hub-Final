@@ -1,21 +1,27 @@
-const mongoose =require('mongoose');
+const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
 const report = new Schema({
-  type:String,
-  hub:String,
-  vehicle:String,
-  description:String,
-  image:String,
-  createdBy:String,
-  status:{
+  type: String,
+  hub: String,
+  vehicle: String,
+  description: String,
+  image: String,
+  createdBy: String,
+  priority: {
     type: String,
-    enum: ['Urgent', 'Medium', 'Low', 'In Progress', 'Resolved'], 
-    default: 'Low' 
+    enum: ['Urgent', 'Medium', 'Low'],
+    default: 'Low'
   },
-},{
-  timestamps:true,
+
+  status: {
+    type: String,
+    enum: ['Pending', 'In Progress', 'Resolved'],
+    default: 'Pending'
+  }
+}, {
+  timestamps: true,
 });
 
-const reportmodel = mongoose.model('report', report,"report");
-module.exports=reportmodel;
+const reportmodel = mongoose.model('report', report, "report");
+module.exports = reportmodel;

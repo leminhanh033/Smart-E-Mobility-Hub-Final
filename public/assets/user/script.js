@@ -204,6 +204,7 @@ if (reportForm) {
       const type = reportForm.elements.namedItem("type").value;
       const hub = reportForm.elements.namedItem("hub").value;
       const vehicle = reportForm.elements.namedItem("vehicle").value;
+      const priority = reportForm.elements.namedItem("priority").value;
       const description = reportForm.elements.namedItem("description").value;
       fetch("/report/issue", {
         method: "POST",
@@ -215,6 +216,7 @@ if (reportForm) {
           hub: hub,
           vehicle: vehicle,
           description: description,
+          priority,
         })
       })
         .then(res => res.json())

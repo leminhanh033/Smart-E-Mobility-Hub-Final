@@ -7,54 +7,6 @@ block main
   .incident-wrapper.container
     
     // =========================================
-    // HÀNG 1: THỐNG KÊ (STATS)
-    // =========================================
-    //- .stats-grid
-      .stat-card
-        .stat-card__header
-          .stat-card__info
-            span.stat-card__label PHIẾU SỰ CỐ ĐANG MỞ
-            .stat-card__value #{stats.openCount || 0} &nbsp; Phiếu
-            span.stat-card__sub.text-red
-              i.fa-solid.fa-triangle-exclamation
-              | Cần xử lý ngay
-          .stat-card__icon.bg-red-light
-            i.fa-regular.fa-clock
-      
-      .stat-card
-        .stat-card__header
-          .stat-card__info
-            span.stat-card__label THIẾT BỊ ĐANG BẢO TRÌ
-            .stat-card__value #{stats.maintenanceCount || 0} &nbsp; Thiết bị
-            span.stat-card__sub.text-orange
-              i.fa-solid.fa-circle
-              | Đang cô lập điện
-          .stat-card__icon.bg-orange-light
-            i.fa-solid.fa-screwdriver-wrench
-
-      .stat-card
-        .stat-card__header
-          .stat-card__info
-            span.stat-card__label THỜI GIAN XỬ LÝ TB (SLA)
-            .stat-card__value 14.2 &nbsp; Phút
-            span.stat-card__sub.text-green
-              i.fa-solid.fa-check
-              | Đạt mục tiêu < 20 phút
-          .stat-card__icon.bg-green-light
-            i.fa-solid.fa-stopwatch
-
-      .stat-card
-        .stat-card__header
-          .stat-card__info
-            span.stat-card__label ĐÃ KHẮC PHỤC HÔM NAY
-            .stat-card__value #{stats.resolvedCount || 0} &nbsp; Phiếu
-            span.stat-card__sub.text-green
-              i.fa-solid.fa-check-double
-              | 100% đã xác nhận
-          .stat-card__icon.bg-green-light
-            i.fa-regular.fa-circle-check
-
-    // =========================================
     // HÀNG 2: LAYOUT CHÍNH
     // =========================================
     .incident-layout
@@ -75,12 +27,12 @@ block main
                   th VỊ TRÍ HUB
                   th LOẠI SỰ CỐ
                   th NGUỒN PHÁT HIỆN
-                  th THỜI GIAN
+                  //- th THỜI GIAN
                   th MỨC ĐỘ
+                  th TRẠNG THÁI
               tbody
                 if reports && reports.length > 0
                   each report, index in reports
-                    //- Gắn data-status để JS đọc trạng thái
                     tr.incident-row(
                       data-id=report._id
                       data-ticket=report.ticketCode
@@ -90,7 +42,9 @@ block main
                       data-type=report.typeLabel
                       data-createdby=report.creatorName
                       data-time=report.timeFormatted
+                      data-priority=report.priority
                       data-status=report.status
+                      data-vehicle-id=report.vehicle || ""
                     )
                       td= index + 1
                       td.font-bold= report.ticketCode
@@ -100,19 +54,22 @@ block main
                       td.text-red= report.typeLabel
                       td
                         strong= report.creatorName
+                      //- td
+                      //-   strong= report.timeFormatted
                       td
-                        strong= report.timeFormatted
-                      td
-                        if report.status === 'Urgent'
+                        if report.priority === 'Urgent'
                           span.badge.badge--red Urgent
-                        else if report.status === 'Medium'
+                        else if report.priority === 'Medium'
                           span.badge.badge--orange Medium
-                        else if report.status === 'Resolved'
+                        else
+                          span.badge.badge--gray Low
+                      td
+                        if report.status === 'Resolved'
                           span.badge.badge--green Đã xử lý
                         else if report.status === 'In Progress'
                           span.badge.badge--blue Đang xử lý
                         else
-                          span.badge.badge--gray Low
+                          span.badge.badge--orange Chờ xử lý
                 else
                   tr
                     td(colspan="8", style="text-align: center; padding: 20px;") Không có sự cố nào cần xử lý.
@@ -155,6 +112,9 @@ block main
                 span.info-label Thời gian ghi nhận:
                 strong.info-value#detailTime --
               .info-row
+                span.info-label Trạng thái:
+                strong.info-value#detailStatus --
+              .info-row
                 span.info-label Mô tả:
                 strong.info-value#detailDescription --
 
@@ -164,7 +124,7 @@ block main
               button.remote-btn(type="button")
                 i.fa-solid.fa-rotate
                 span Khởi động lại ngầm khóa IoT
-              button.remote-btn(type="button")
+              button#btnEmergencyLock.remote-btn(type="button")
                 i.fa-solid.fa-lock
                 span Khóa chốt khẩn cấp
 

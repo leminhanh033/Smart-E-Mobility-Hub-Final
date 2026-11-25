@@ -23,32 +23,32 @@ if (notify) {
 
 //Đăng xuất
 const btnLogout = document.querySelector(".log-out");
-if(btnLogout){
-  btnLogout.addEventListener("click",(e)=>{
+if (btnLogout) {
+  btnLogout.addEventListener("click", (e) => {
     e.preventDefault();
     const confirmed = confirm("Bạn có chắc chắn muốn đăng xuất không?");
-    if(!confirmed){
+    if (!confirmed) {
       return;
     }
-    fetch("/admin/account/logout",{
+    fetch("/admin/account/logout", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       }
     })
-    .then(res=>res.json())
-    .then(data=>{
-      if(data.code=="success"){
-        alertMessage(data);
-        window.location.href = "/admin/account/login";
-      }
-      if(data.code=="error"){
-        notyf.error(data.message);
-      }
-    })
-    .catch(()=>{
-      notyf.error("Lỗi kết nối, vui lòng thử lại");
-    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.code == "success") {
+          alertMessage(data);
+          window.location.href = "/admin/account/login";
+        }
+        if (data.code == "error") {
+          notyf.error(data.message);
+        }
+      })
+      .catch(() => {
+        notyf.error("Lỗi kết nối, vui lòng thử lại");
+      })
   })
 }
 
@@ -765,14 +765,14 @@ if (createPort) {
 
 
 
-const detailCard        = document.getElementById("detailCard");
-const emptyDetailState  = document.getElementById("emptyDetailState");
-const detailFooter      = document.getElementById("detailFooter");
-const btnConfirmTicket  = document.getElementById("btnConfirmTicket");
-const btnResolveTicket  = document.getElementById("btnResolveTicket");
-const btnIgnoreTicket   = document.getElementById("btnIgnoreTicket");
+const detailCard = document.getElementById("detailCard");
+const emptyDetailState = document.getElementById("emptyDetailState");
+const detailFooter = document.getElementById("detailFooter");
+const btnConfirmTicket = document.getElementById("btnConfirmTicket");
+const btnResolveTicket = document.getElementById("btnResolveTicket");
+const btnIgnoreTicket = document.getElementById("btnIgnoreTicket");
 
-let currentIncidentId = null; 
+let currentIncidentId = null;
 
 function updateFooterButtons(status) {
   if (!btnConfirmTicket || !btnResolveTicket || !btnIgnoreTicket) return;
@@ -785,7 +785,7 @@ function updateFooterButtons(status) {
   if (status === "Urgent" || status === "Medium" || status === "Low") {
     // Chưa xử lý → hiện Xác nhận + Bỏ qua
     btnConfirmTicket.style.display = "inline-flex";
-    btnIgnoreTicket.style.display  = "inline-flex";
+    btnIgnoreTicket.style.display = "inline-flex";
   } else if (status === "In Progress") {
     // Đang xử lý (chờ KTV) → hiện "Đã xử lý xong"
     btnResolveTicket.style.display = "inline-flex";
@@ -801,37 +801,57 @@ document.querySelectorAll(".incident-row").forEach((row) => {
 
     // Lấy dữ liệu từ data-attributes
     currentIncidentId = row.getAttribute("data-id");
-    const ticket   = row.getAttribute("data-ticket")    || "--";
-    const vehicle  = row.getAttribute("data-vehicle")   || "--";
-    const hub      = row.getAttribute("data-hub")       || "--";
-    const type     = row.getAttribute("data-type")      || "--";
-    const createdBy= row.getAttribute("data-createdby") || "--";
-    const time     = row.getAttribute("data-time")      || "--";
-    const status   = row.getAttribute("data-status")    || "";
+    const ticket = row.getAttribute("data-ticket") || "--";
+    const vehicle = row.getAttribute("data-vehicle") || "--";
+    const hub = row.getAttribute("data-hub") || "--";
+    const type = row.getAttribute("data-type") || "--";
+    const createdBy = row.getAttribute("data-createdby") || "--";
+    const time = row.getAttribute("data-time") || "--";
+    const priority = row.getAttribute("data-priority") || "";
+    const status = row.getAttribute("data-status") || "Pending";
+    const rawVehicle = (row.getAttribute("data-vehicle") || "").trim();
+
+    const statusLabelMap = {
+      "Pending": "Chờ xử lý",
+      "In Progress": "Đang xử lý",
+      "Resolved": "Đã xử lý"
+    };
+
+    const vehicleEl = document.getElementById("detailVehicle");
+
+    if (vehicleEl) {
+      const isHubIssue =
+        !vehicleId ||
+        rawVehicle === "Không có (Sự cố trạm Hub)";
+
+      vehicleEl.textContent = isHubIssue
+        ? "Sự cố trạm Hub"
+        : rawVehicle || vehicleId;
+
+      if (vehicleRow) vehicleRow.style.display = "";
+    }
 
     // Đắp vào panel chi tiết
     document.getElementById("detailTicketCode").textContent = ticket;
-    document.getElementById("detailVehicle").textContent    = vehicle;
-    document.getElementById("detailHub").textContent        = hub;
-    document.getElementById("detailType").textContent       = type;
-    document.getElementById("detailCreatedBy").textContent  = createdBy;
-    document.getElementById("detailTime").textContent       = time;
+    document.getElementById("detailVehicle").textContent = vehicle;
+    document.getElementById("detailHub").textContent = hub;
+    document.getElementById("detailType").textContent = type;
+    document.getElementById("detailCreatedBy").textContent = createdBy;
+    document.getElementById("detailTime").textContent = time;
     document.getElementById("detailDescription").textContent = row.getAttribute("data-description") || "Không có mô tả";
-
+    document.getElementById("detailStatus").textContent = statusLabelMap[status] || status;
     // Cập nhật badge
     const badge = document.getElementById("detailBadge");
     if (badge) {
       badge.textContent = status || "--";
       badge.className = "badge";
-      if (status === "Urgent")        badge.classList.add("badge--red");
-      else if (status === "Medium")   badge.classList.add("badge--orange");
-      else if (status === "In Progress") badge.classList.add("badge--blue");
-      else if (status === "Resolved") badge.classList.add("badge--green");
-      else                            badge.classList.add("badge--gray");
+      if (priority === "Urgent") badge.classList.add("badge--red");
+      else if (priority === "Medium") badge.classList.add("badge--orange");
+      else badge.classList.add("badge--gray");
     }
 
     if (emptyDetailState) emptyDetailState.style.display = "none";
-    if (detailCard)       detailCard.style.display = "block";
+    if (detailCard) detailCard.style.display = "block";
 
     updateFooterButtons(status);
   });

@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
     });
 
     // Cảnh báo = báo cáo pending + hub gần đầy
-    const pendingReports = await reportModel.countDocuments({ status: 'pending' });
+    const pendingReports = await reportModel.countDocuments({ status: "Pending" });
     const nearFullHubs   = hubs.filter(h => {
       const total = (h.parkingNumber || 0) + (h.ACNumber || 0) + (h.DCNumber || 0);
       const used  = (h.parkingUsed || 0) + (h.ACUsed || 0) + (h.DCUsed || 0);
