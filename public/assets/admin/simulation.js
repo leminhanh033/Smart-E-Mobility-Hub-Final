@@ -196,7 +196,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const hub = MOBILITY_HUB_NETWORK_DATA[hubSelect.value];
     totalPortsInput.value = hub.workingPorts;
     currentChargingInput.value = hub.activeCharging;
-    totalPortsInput.readOnly = currentChargingInput.readOnly = true;
+    // totalPortsInput.readOnly = currentChargingInput.readOnly = true;
   };
   hubSelect.addEventListener('change', fillCharging);
   fillCharging();
@@ -309,7 +309,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const hub = MOBILITY_HUB_NETWORK_DATA[hubSelect.value];
     totalCapacityInput.value = hub.parkingSlots;
     currentOccupiedInput.value = hub.parkingUsed;
-    totalCapacityInput.readOnly = currentOccupiedInput.readOnly = true;
+    // totalCapacityInput.readOnly = currentOccupiedInput.readOnly = true;
   };
   hubSelect.addEventListener('change', fillParking);
   fillParking();
@@ -608,7 +608,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!hubSelect.value) { btnRun.disabled = true; return; }
   const updateInputDefaults = (hubId) => {
     currentVehiclesInput.value = MOBILITY_HUB_NETWORK_DATA[hubId].rentFleet;
-    currentVehiclesInput.readOnly = true;
+    // currentVehiclesInput.readOnly = true;
   };
   hubSelect.addEventListener('change', (e) => updateInputDefaults(e.target.value));
   updateInputDefaults(hubSelect.value);
